@@ -198,28 +198,15 @@ namespace trieste
           .test();
       }
 
-      else if (*utest){
+      else if (*utest) {
         auto passes = reader.passes();
-        for (auto pass : passes){
-          for (auto t : pass->tests()){
-            for (auto assertion : t.assertions){
-            logging::Output() << "Running unit tests for pass" << pass->name() << std::endl 
-                              << "Testing " << t.desc_ << std::endl
-                              << "before:\n" << assertion.before_ << std::endl;
-
-            auto [actual, _, __] = pass->run(assertion.before_); 
-            bool ok = assertion.assertion(actual,assertion.expected_);
-         
-            logging::Output() << "expected: " << assertion.expected_ << std::endl
-                              << "actual: " << actual << std::endl
-                              << (ok ? "test passed" : "test failed") << std::endl;
-
-            }
+        for (auto pass : passes) {
+          logging::Output() << "Running unit tests for pass" << pass->name() << std::endl;
+          for (auto unit_test : pass->tests()) {
+            if (unit_test.run()) ret = 1;
           }
         }
-        //log result 
       }
-
       return ret;
     }
   };

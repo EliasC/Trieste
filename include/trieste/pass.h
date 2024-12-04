@@ -141,8 +141,12 @@ namespace trieste
     }
 
     void unit_test(std::string desc, std::function<void(unit_test::Test&)> register_test)
-    { 
-      unit_test::Test test = {desc};
+    {
+      std::function<Node(Node)> runner = [this](Node before) {
+          auto [after, _, __] = this->run(before);
+          return after;
+      };
+      unit_test::Test test = {desc, runner};
       register_test(test);
       tests_.push_back(test);
     }
