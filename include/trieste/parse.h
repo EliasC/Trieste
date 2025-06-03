@@ -132,6 +132,25 @@ namespace trieste
         node->push_back(make_error(location, msg));
       }
 
+      void prefix(const Token& type, size_t index = 0)
+      {
+        if (node->type() == Group && node->empty())
+        {
+          seq(type);
+        }
+        else {
+          node->push_back(NodeDef::create(type, re_match.at(index)));
+          node = node->back();
+          push(Group);
+        }
+      }
+
+      void infix(const Token& type, std::initializer_list<Token> skip = {})
+      {
+        seq(type, skip);
+        push(Group);
+      }
+
       void add(const Token& type, size_t index = 0)
       {
         if ((type != Group) && !in(Group))
@@ -231,6 +250,11 @@ namespace trieste
       size_t error_count() const
       {
         return error_count_;
+      }
+
+      void expect(size_t)
+      {
+
       }
 
     private:
