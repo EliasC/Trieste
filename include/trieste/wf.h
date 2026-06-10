@@ -495,7 +495,11 @@ namespace trieste
         for (i = 0; i < min_len; ++i)
           choice.gen(g, depth, node);
 
-        if (depth >= g.target_depth)
+        auto weight_sum = 0;
+        for (const auto& t : choice.types)
+          weight_sum += g.weight_for(t);
+
+        if (depth >= g.target_depth || weight_sum == 0)
         {
           return;
         }
