@@ -127,7 +127,8 @@ namespace trieste
         std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
 
         if (offsets.empty() || offsets.back() <= 0.0)
-          throw_no_candidates(tokens, parent, depth, "no positive effective weights");
+          throw_no_candidates(
+            tokens, parent, depth, "no positive effective weights");
 
         // instead of normalising the distribution, scale the random value by
         // the sum of the weights
@@ -141,7 +142,8 @@ namespace trieste
         return tokens[std::distance(offsets.begin(), it)];
       }
 
-      Token choose(const std::vector<Token>& tokens, std::size_t depth, Token parent)
+      Token
+      choose(const std::vector<Token>& tokens, std::size_t depth, Token parent)
       {
         if (tokens.empty())
           throw_no_candidates(tokens, parent, depth, "empty token list");
@@ -852,14 +854,12 @@ namespace trieste
       }
 
     public:
-      Node
-      gen(
+      Node gen(
         GenNodeLocationF gloc,
         Seed seed,
         size_t target_depth,
         bool gen_bound,
-        TokenWeights token_weights = {})
-        const
+        TokenWeights token_weights = {}) const
       {
         // Collect map of tokens to their binding token and the corresponding
         // index
@@ -868,13 +868,13 @@ namespace trieste
           populate_binding_keys(binding_keys);
 
         auto g = Gen(
-          compute_minimum_distance_to_terminal(target_depth),
-          gloc,
-          seed,
-          target_depth,
-          binding_keys,
-          gen_bound)
-          .token_weights(std::move(token_weights));
+                   compute_minimum_distance_to_terminal(target_depth),
+                   gloc,
+                   seed,
+                   target_depth,
+                   binding_keys,
+                   gen_bound)
+                   .token_weights(std::move(token_weights));
         auto top = NodeDef::create(Top);
         ast::detail::top_node() = top;
         gen_node(g, 0, top);

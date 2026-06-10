@@ -275,8 +275,8 @@ namespace trieste
           auto token = detail::find_token(name);
           if (token == Invalid)
           {
-            logging::Error() << "Unknown token in weights: " << name
-                             << std::endl;
+            logging::Error()
+              << "Unknown token in weights: " << name << std::endl;
             return 1;
           }
           parsed_weights[token] = weight;
