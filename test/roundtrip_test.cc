@@ -143,13 +143,13 @@ namespace
     // exists in the probabilistic branches.
     {
       auto g = wf::Gen(
-        wf::TokenTerminalDistance{{WeightA, 1}, {WeightB, 1}},
-        gloc,
-        123,
-        5,
-        {},
-        false)
-        .token_weights(wf::TokenWeights{{WeightA, 0}, {WeightB, 5}});
+                 wf::TokenTerminalDistance{{WeightA, 1}, {WeightB, 1}},
+                 gloc,
+                 123,
+                 5,
+                 {},
+                 false)
+                 .token_weights(wf::TokenWeights{{WeightA, 0}, {WeightB, 5}});
 
       for (size_t i = 0; i < 64; i++)
       {
@@ -166,13 +166,13 @@ namespace
     // All-zero weights are invalid at a choice point.
     {
       auto g = wf::Gen(
-        wf::TokenTerminalDistance{{WeightA, 1}, {WeightB, 1}},
-        gloc,
-        321,
-        5,
-        {},
-        false)
-        .token_weights(wf::TokenWeights{{WeightA, 0}, {WeightB, 0}});
+                 wf::TokenTerminalDistance{{WeightA, 1}, {WeightB, 1}},
+                 gloc,
+                 321,
+                 5,
+                 {},
+                 false)
+                 .token_weights(wf::TokenWeights{{WeightA, 0}, {WeightB, 0}});
 
       bool threw = false;
       try
@@ -194,14 +194,10 @@ namespace
 
     // A singleton choice with zero weight should also fail.
     {
-      auto g = wf::Gen(
-        wf::TokenTerminalDistance{{WeightA, 1}},
-        gloc,
-        111,
-        5,
-        {},
-        false)
-        .token_weights(wf::TokenWeights{{WeightA, 0}});
+      auto g =
+        wf::Gen(
+          wf::TokenTerminalDistance{{WeightA, 1}}, gloc, 111, 5, {}, false)
+          .token_weights(wf::TokenWeights{{WeightA, 0}});
 
       bool threw = false;
       try
@@ -215,8 +211,9 @@ namespace
 
       if (!threw)
       {
-        std::cout << "wf_token_weights: expected throw for zero-weight singleton"
-                  << std::endl;
+        std::cout
+          << "wf_token_weights: expected throw for zero-weight singleton"
+          << std::endl;
         ok = false;
       }
     }
@@ -224,13 +221,13 @@ namespace
     // Ceiling fallback remains distance-driven, ignoring token weights.
     {
       auto g = wf::Gen(
-        wf::TokenTerminalDistance{{WeightA, 0}, {WeightB, 10}},
-        gloc,
-        222,
-        1,
-        {},
-        false)
-        .token_weights(wf::TokenWeights{{WeightA, 0}, {WeightB, 100}});
+                 wf::TokenTerminalDistance{{WeightA, 0}, {WeightB, 10}},
+                 gloc,
+                 222,
+                 1,
+                 {},
+                 false)
+                 .token_weights(wf::TokenWeights{{WeightA, 0}, {WeightB, 100}});
 
       if (g.choose(choices, 2, Top) != WeightA)
       {
