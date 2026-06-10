@@ -23,6 +23,7 @@ namespace trieste
     size_t end_index_;
     size_t max_retries_;
     bool bound_vars_;
+    wf::TokenWeights token_weights_;
     bool test_sequence_;
     bool size_stats_;
 
@@ -209,15 +210,23 @@ namespace trieste
     /// @return The generated AST node.
     Node gen_ast(const wf::Wellformed& wf, SeedContext& context)
     {
-      auto ast =
-        wf.gen(generators_, context.current_seed, max_depth_, bound_vars_);
+      auto ast = wf.gen(
+        generators_,
+        context.current_seed,
+        max_depth_,
+        bound_vars_,
+        token_weights_);
       size_t hash = ast->hash();
       while (context.ast_hashes.find(hash) != context.ast_hashes.end() &&
              context.retries < max_retries_)
       {
         context.current_seed = context.retry_seed++;
-        ast =
-          wf.gen(generators_, context.current_seed, max_depth_, bound_vars_);
+        ast = wf.gen(
+          generators_,
+          context.current_seed,
+          max_depth_,
+          bound_vars_,
+          token_weights_);
         hash = ast->hash();
         context.retries++;
       }
@@ -477,6 +486,7 @@ namespace trieste
       end_index_(passes.size()),
       max_retries_(100),
       bound_vars_(true),
+      token_weights_({}),
       test_sequence_(false),
       size_stats_(false)
     {}
@@ -669,6 +679,12 @@ namespace trieste
     Fuzzer& bound_vars(bool gen_bound_vars)
     {
       bound_vars_ = gen_bound_vars;
+      return *this;
+    }
+
+    Fuzzer& token_weights(wf::TokenWeights token_weights)
+    {
+      token_weights_ = std::move(token_weights);
       return *this;
     }
 
