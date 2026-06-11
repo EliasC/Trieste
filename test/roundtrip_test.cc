@@ -130,7 +130,6 @@ namespace
 
     return ok;
   }
-
 }
 
 int main()
