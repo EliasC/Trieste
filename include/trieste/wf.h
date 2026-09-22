@@ -171,9 +171,7 @@ namespace trieste
           tokens.begin(),
           tokens.end(),
           std::back_inserter(offsets),
-          [&](const Token& t) {
-            return static_cast<double>(weight_for(t));
-          });
+          [&](const Token& t) { return static_cast<double>(weight_for(t)); });
         std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
 
         return weighted_offsets_cache_.emplace(&tokens, std::move(offsets))
