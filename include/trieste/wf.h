@@ -39,6 +39,8 @@ namespace trieste
       TokenWeights token_weights_;
       std::map<Token, std::pair<std::vector<Token>, size_t>> binding_keys;
       bool gen_bound_vars;
+      std::map<const std::vector<Token>*, std::vector<double>>
+        weighted_offsets_cache_;
 
       /* The generator chooses which token to emit next. It makes this choice
        * using a weighted probability distribution, where the weights are based
@@ -117,6 +119,30 @@ namespace trieste
         throw std::runtime_error(err.str());
       }
 
+      // Samples from an already-computed cumulative distribution, i.e. one
+      // that has already had std::partial_sum applied to it.
+      Token choose_from_cumulative(
+        const std::vector<Token>& tokens,
+        const std::vector<double>& cumulative,
+        Token parent,
+        std::size_t depth)
+      {
+        if (cumulative.empty() || cumulative.back() <= 0.0)
+          throw_no_candidates(
+            tokens, parent, depth, "no positive effective weights");
+
+        // instead of normalising the distribution, scale the random value by
+        // the sum of the weights
+        double value = static_cast<double>(rand() - rand.min()) /
+          static_cast<double>(rand.max() - rand.min()) * cumulative.back();
+
+        // finding the first element greater than the uniform random number is
+        // the same as performing a weighted sampling of the distribution
+        auto it = std::lower_bound(cumulative.begin(), cumulative.end(), value);
+
+        return tokens[std::distance(cumulative.begin(), it)];
+      }
+
       Token choose_weighted(
         const std::vector<Token>& tokens,
         std::vector<double> offsets,
@@ -125,21 +151,33 @@ namespace trieste
       {
         // compute the cumulative distribution of the given offsets
         std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
+        return choose_from_cumulative(tokens, offsets, parent, depth);
+      }
 
-        if (offsets.empty() || offsets.back() <= 0.0)
-          throw_no_candidates(
-            tokens, parent, depth, "no positive effective weights");
+      // The token-weight-only distribution for a given candidate list is the
+      // same every time it is used (it only depends on the static token
+      // weights, not on depth), so it is computed once per candidate list and
+      // cached for the lifetime of this Gen.
+      const std::vector<double>&
+      cumulative_weighted_offsets(const std::vector<Token>& tokens)
+      {
+        auto found = weighted_offsets_cache_.find(&tokens);
+        if (found != weighted_offsets_cache_.end())
+          return found->second;
 
-        // instead of normalising the distribution, scale the random value by
-        // the sum of the weights
-        double value = static_cast<double>(rand() - rand.min()) /
-          static_cast<double>(rand.max() - rand.min()) * offsets.back();
+        std::vector<double> offsets;
+        offsets.reserve(tokens.size());
+        std::transform(
+          tokens.begin(),
+          tokens.end(),
+          std::back_inserter(offsets),
+          [&](const Token& t) {
+            return static_cast<double>(weight_for(t));
+          });
+        std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
 
-        // finding the first element greater than the uniform random number is
-        // the same as performing a weighted sampling of the distribution
-        auto it = std::lower_bound(offsets.begin(), offsets.end(), value);
-
-        return tokens[std::distance(offsets.begin(), it)];
+        return weighted_offsets_cache_.emplace(&tokens, std::move(offsets))
+          .first->second;
       }
 
       Token
@@ -160,16 +198,8 @@ namespace trieste
         {
           if (!token_weights_.empty())
           {
-            std::vector<double> offsets;
-            offsets.reserve(tokens.size());
-            std::transform(
-              tokens.begin(),
-              tokens.end(),
-              std::back_inserter(offsets),
-              [&](const Token& t) {
-                return static_cast<double>(weight_for(t));
-              });
-            return choose_weighted(tokens, std::move(offsets), parent, depth);
+            return choose_from_cumulative(
+              tokens, cumulative_weighted_offsets(tokens), parent, depth);
           }
 
           std::size_t choice = rand() % tokens.size();
